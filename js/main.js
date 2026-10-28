@@ -235,7 +235,7 @@ var hero=$('.hero'),heroLogo=$('.hero__logo'),heroVid=$('video.hero__img');
 if(heroVid&&reduce){heroVid.removeAttribute('autoplay');heroVid.pause()}
 var day=$('.daylight'),dayFrame=$$('.daylight__frame img'),dayBg=$$('.daylight__bg img'),phases=$$('.phase'),ticks=$$('.daylight__ticks span'),dayCount=$('.daylight__count'),sun=$('.dial__sun');
 var works=$('.works'),worksSticky=$('.works__sticky'),worksMeter=$('.works__meter');
-var stmt=$('.statement'),portal=$('.portal'),svcWrap=$('.svc-wrap'),footWord=$('.foot__word'),bar=$('.progress');
+var stmt=$('.statement'),portal=$('.portal'),svcWrap=$('.svc-wrap'),bar=$('.progress');
 var parallax=$$('[data-parallax]');
 var M={};
 function top(el){var y=0;while(el){y+=el.offsetTop;el=el.offsetParent}return y}
@@ -246,7 +246,7 @@ function measure(){
     M.wDist=Math.max(0,track.scrollWidth-vw);
     if(isDesktop()&&!reduce){works.style.height=(M.vh+M.wDist)+'px'}else{works.style.height='';track.style.transform=''}
   }
-  [['day',day],['works',works],['stmt',stmt],['portal',portal],['svc',svcWrap],['foot',footWord]].forEach(function(p){if(p[1]){M[p[0]]={t:top(p[1]),h:p[1].offsetHeight}}});
+  [['day',day],['works',works],['stmt',stmt],['portal',portal],['svc',svcWrap]].forEach(function(p){if(p[1]){M[p[0]]={t:top(p[1]),h:p[1].offsetHeight}}});
   fillEls.forEach(function(f){f.t=top(f.el);f.h=f.el.offsetHeight});
   parallax.forEach(function(img){img._t=top(img.parentNode);img._h=img.parentNode.offsetHeight});
   clips.forEach(function(c){c._t=top(c)});
@@ -308,9 +308,6 @@ function onScroll(y){
   }
   // services rail
   if(M.svc)svcWrap.style.setProperty('--rp',prog(M.svc,y,vh*.6,M.svc.h).toFixed(4));
-  // footer wordmark fill
-  // fills from the moment the wordmark enters until the very bottom of the page
-  if(M.foot){var fmax=Math.max(1,M.doc-M.foot.t);footWord.style.setProperty('--fw',(clamp((y+vh-M.foot.t)/fmax,0,1)*100).toFixed(1)+'%')}
   // parallax
   parallax.forEach(function(img){
     var c=(y+vh/2)-(img._t+img._h/2);

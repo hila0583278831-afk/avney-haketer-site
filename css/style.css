@@ -440,7 +440,6 @@ html:not(.js) .loader{display:none}
 .foot__h{color:var(--sand);font-size:13px;letter-spacing:.18em;margin-bottom:4px}
 .foot a{color:var(--mist);text-decoration:none;transition:color .3s}
 .foot a:hover{color:var(--bronze-l)}
-.foot__word{width:fit-content;max-width:none;margin:clamp(50px,7vw,100px) auto -.24em;padding:.06em .14em .24em;font-size:clamp(56px,13vw,280px);line-height:.85;text-align:center;color:transparent;-webkit-text-stroke:1px rgba(199,149,99,.28);white-space:nowrap;background:linear-gradient(0deg,var(--bronze-l),var(--bronze-l)) no-repeat bottom/100% var(--fw,0%);-webkit-background-clip:text;background-clip:text;transition:background-size .1s linear}
 .foot__base{margin-top:30px;border-top:1px solid rgba(237,230,218,.1);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13px}
 
 
