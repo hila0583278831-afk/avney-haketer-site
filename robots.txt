@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://YOUR-DOMAIN/sitemap.xml
+Sitemap: https://hila0583278831-afk.github.io/avney-haketer-site/sitemap.xml
