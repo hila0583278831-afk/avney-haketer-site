@@ -1,0 +1,79 @@
+/* ============================================================
+   Accessibility widget (תוסף נגישות)
+   ============================================================ */
+.a11y-btn{position:fixed;z-index:130;top:50%;inset-inline-end:0;translate:0 -50%;width:52px;height:56px;border:0;border-radius:0 14px 14px 0;background:var(--bronze);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 14px 34px -14px rgba(0,0,0,.6);transition:width .4s var(--ease),background .3s}
+[dir="rtl"] .a11y-btn{border-radius:14px 0 0 14px}
+.a11y-btn:hover,.a11y-btn[aria-expanded="true"]{width:60px;background:var(--bronze-d)}
+.a11y-btn:focus-visible{outline:3px solid #fff;outline-offset:-6px}
+.a11y-btn svg{width:30px;height:30px}
+
+.a11y-panel{position:fixed;z-index:131;top:50%;inset-inline-end:72px;translate:0 -50%;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;background:rgba(23,25,28,.97);color:var(--stone);border:1px solid rgba(199,149,99,.35);border-radius:18px;box-shadow:0 40px 90px -30px rgba(0,0,0,.8);padding:20px;font-family:"Ploni","Heebo",Arial,sans-serif;opacity:0;visibility:hidden;scale:.96;transition:opacity .3s,scale .4s var(--ease),visibility 0s .3s}
+.a11y-panel.is-open{opacity:1;visibility:visible;scale:1;transition:opacity .3s,scale .4s var(--ease),visibility 0s}
+.a11y-panel__head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.a11y-panel__title{margin:0;font:500 20px/1.2 "Ploni","Heebo",Arial,sans-serif;color:var(--stone)}
+.a11y-close{width:40px;height:40px;border-radius:50%;border:1px solid rgba(237,230,218,.3);background:transparent;color:var(--stone);cursor:pointer;font-size:22px;line-height:1}
+.a11y-close:hover{background:var(--bronze-l);color:var(--ink);border-color:var(--bronze-l)}
+.a11y-size{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border:1px solid rgba(237,230,218,.16);border-radius:12px;margin-bottom:10px}
+.a11y-size span{font-size:16px}
+.a11y-size output{min-width:46px;text-align:center;font-size:15px;color:var(--gold)}
+.a11y-size button{width:42px;height:42px;border-radius:10px;border:1px solid rgba(237,230,218,.3);background:transparent;color:var(--stone);font-size:20px;cursor:pointer}
+.a11y-size button:hover{background:var(--bronze-l);color:var(--ink)}
+.a11y-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.a11y-opt{min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:12px;border:1px solid rgba(237,230,218,.16);background:rgba(255,255,255,.03);color:var(--stone);font:400 15px/1.25 "Ploni","Heebo",Arial,sans-serif;text-align:center;cursor:pointer;transition:background .25s,border-color .25s,color .25s}
+.a11y-opt svg{width:24px;height:24px;flex:none}
+.a11y-opt:hover{border-color:var(--bronze-l)}
+.a11y-opt[aria-pressed="true"]{background:var(--bronze-l);border-color:var(--bronze-l);color:var(--ink)}
+.a11y-panel button:focus-visible,.a11y-panel a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.a11y-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(237,230,218,.14)}
+.a11y-reset{min-height:42px;padding:0 16px;border-radius:999px;border:1px solid rgba(237,230,218,.3);background:transparent;color:var(--stone);font:inherit;font-size:15px;cursor:pointer}
+.a11y-reset:hover{background:var(--stone);color:var(--ink)}
+.a11y-foot a{color:var(--gold);font-size:15px}
+.a11y-foot a:hover{color:#fff}
+@media (max-width:560px){
+  .a11y-btn{top:auto;bottom:16px;translate:none;width:52px;height:52px}
+  .a11y-btn:hover,.a11y-btn[aria-expanded="true"]{width:52px}
+  .a11y-panel{top:auto;bottom:80px;translate:none;inset-inline-end:16px}
+}
+
+/* ---------- settings applied to the page ---------- */
+/* text size: zoom keeps the layout's proportions; JS re-measures scroll scenes after a change */
+html[data-a11y-size="1"] body{zoom:1.12}
+html[data-a11y-size="2"] body{zoom:1.25}
+html[data-a11y-size="3"] body{zoom:1.4}
+html[data-a11y-size="-1"] body{zoom:.92}
+
+html.a11y-contrast{filter:contrast(1.35)}
+html.a11y-contrast body{--muted:#2A2D31;--mist:#E2DCD2}
+html.a11y-contrast .body,html.a11y-contrast .stat>span,html.a11y-contrast .svc__d{color:#1A1C1F!important}
+html.a11y-contrast .why p,html.a11y-contrast .foot,html.a11y-contrast .flag__desc>p{color:#F5F0E8!important}
+html.a11y-invert{filter:invert(1) hue-rotate(180deg)}
+html.a11y-invert img,html.a11y-invert video,html.a11y-invert .statement__text:not(.statement__text--solid){filter:invert(1) hue-rotate(180deg)}
+html.a11y-gray{filter:grayscale(1)}
+html.a11y-contrast.a11y-gray{filter:contrast(1.35) grayscale(1)}
+
+html.a11y-links a{text-decoration:underline!important;text-underline-offset:3px;outline:2px solid #F2C14E!important;outline-offset:2px}
+html.a11y-links button:not(.a11y-opt):not(.a11y-close):not(.a11y-reset):not(.a11y-btn){outline:2px solid #F2C14E!important;outline-offset:2px}
+
+html.a11y-font body,html.a11y-font body *:not(svg):not(svg *){font-family:Arial,"Heebo",sans-serif!important;letter-spacing:normal!important}
+html.a11y-spacing body *:not(svg):not(svg *){line-height:1.9!important;letter-spacing:.04em!important;word-spacing:.12em!important}
+html.a11y-spacing .lia,html.a11y-spacing .h2,html.a11y-spacing .flag__title,html.a11y-spacing .phase b,html.a11y-spacing .statement__text{line-height:1.25!important}
+
+html.a11y-cursor,html.a11y-cursor *{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cpath d='M6 4l30 16-13 3 8 15-6 3-8-15-11 9z' fill='%23111' stroke='%23fff' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E") 6 4,auto!important}
+html.a11y-cursor .cursor{display:none!important}
+
+/* stop animations: everything static, all content visible */
+html.a11y-still *,html.a11y-still *:before,html.a11y-still *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+html.a11y-still .grain,html.a11y-still .cursor{display:none!important}
+html.a11y-still [data-cursor]{cursor:auto}
+html.a11y-still [data-reveal],html.a11y-still .sheet{opacity:1!important;transform:none!important;clip-path:none!important}
+html.a11y-still [data-reveal] img{scale:1!important}
+html.a11y-still .w>i{transform:none!important}
+html.a11y-still .manifesto .fw{opacity:1!important}
+html.a11y-still .marquee__track{transform:none!important}
+html.a11y-still .draw path,html.a11y-still .draw line,html.a11y-still .draw rect,html.a11y-still .draw polyline,html.a11y-still .draw circle,html.a11y-still .draw polygon{stroke-dashoffset:0!important}
+html.a11y-still .draw text{opacity:1!important}
+html.a11y-still .statement{height:auto;--ss:1!important;--sb:1!important;--sl:1!important}
+html.a11y-still .statement__sticky{position:relative;height:auto;padding:150px 0}
+html.a11y-still .portal{display:none}
+html.a11y-still .hero__frame{clip-path:none!important}
+.a11y-size__ctrl{display:flex;align-items:center;gap:6px}

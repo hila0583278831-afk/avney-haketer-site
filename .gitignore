@@ -2,3 +2,9 @@
 Thumbs.db
 .vercel
 .netlify
+node_modules/
+.env*
+*.log
+.vscode/
+.idea/
+*.local

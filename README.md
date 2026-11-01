@@ -31,6 +31,27 @@ Everything respects the system's *reduce motion* setting: the heavy effects swit
 
 Placeholder numbers in the statistics row (6 projects, 9 neighborhoods, 100%, 1 contact person) come from the site's own content. Replace them with real figures in `index.html` (`data-count="…"`).
 
+## Accessibility, privacy, security, SEO
+
+- **Accessibility widget** (`js/a11y.js` + `css/a11y.css`): side button or `Alt+A`. It offers text size, high and inverted contrast, grayscale, link highlighting, a readable font, text spacing, a large cursor and stop animations. Preferences are saved in localStorage (`akh-a11y`), and `window.akhA11y.get/set` lets other controls share them. The hero's "עצירת תנועה" button is one of those controls.
+- **Code-level fixes:** a widget alone does not meet the Israeli regulations, so the code itself also includes:
+  - a strong focus ring on every background, plus focus management for the menu, the dialog and the project strip;
+  - headings that screen readers read whole, not word by word;
+  - required fields that are marked, with inline errors that are announced;
+  - live regions;
+  - contrast-checked colors (`--bronze-btn` for white-on-bronze buttons).
+- **Legal pages:** `accessibility.html` (הצהרת נגישות) and `privacy.html` (מדיניות פרטיות). **Fill in every highlighted `[placeholder]`** before launch: legal name, company number, accessibility coordinator, audit date, retention period and office accessibility.
+- **Privacy:** a notice under the form links to the policy. The form sends only `origin + pathname`, never query strings. Personal data never goes to the console. The only third parties are Google Fonts and Formspree.
+- **Security:**
+  - A meta CSP plus a referrer policy is in place. The inline `<head>` script is allowed by its sha256 hash, so if you change that script, recompute the hash in the CSP.
+  - The project panel builds its content with `textContent`, never HTML strings.
+  - `netlify.toml` and `vercel.json` carry the full header set for when the site moves off GitHub Pages: CSP with `frame-ancestors`, HSTS, nosniff, Permissions-Policy.
+  - In Formspree: restrict the form to your domain, and enable spam filtering and 2FA.
+- **SEO:**
+  - JSON-LD (RealEstateAgent, WebSite and an ItemList of the 6 projects) is in `<head>`.
+  - The keyword title and description are set, and the sitemap covers all 3 pages.
+  - Stat numbers are in the HTML itself.
+
 ## Before going live: 2 replacements
 
 1. **Form endpoint**: in `js/main.js`, replace `YOUR_FORM_ID` (see "Contact form" below).

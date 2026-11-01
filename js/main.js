@@ -12,6 +12,8 @@ var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var finePointer=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 var isDesktop=function(){return window.innerWidth>900};
 if(reduce)doc.classList.add('no-motion');
+// the accessibility widget's "stop animations" setting
+var still=function(){return doc.classList.contains('a11y-still')};
 
 /* ---------- split words ---------- */
 function splitWords(el){
@@ -32,7 +34,15 @@ function splitWords(el){
     });
   })(el);
 }
-$$('[data-split]').forEach(splitWords);
+// screen readers get the sentence once, in one piece; the per-word spans are visual only
+function srWrap(el){
+  var text=el.textContent.replace(/\s+/g,' ').trim(),vis=document.createElement('span'),sr=document.createElement('span');
+  vis.setAttribute('aria-hidden','true');
+  while(el.firstChild)vis.appendChild(el.firstChild);
+  sr.className='sr-only';sr.textContent=text;
+  el.appendChild(vis);el.appendChild(sr);
+}
+$$('[data-split]').forEach(function(el){splitWords(el);srWrap(el)});
 
 /* words that fill in with scroll */
 var fillEls=$$('[data-fill]').map(function(el){
@@ -49,6 +59,7 @@ var fillEls=$$('[data-fill]').map(function(el){
       }else if(ch.nodeType===1){walk(ch)}
     });
   })(el);
+  srWrap(el);
   return {el:el,words:$$('.fw',el)};
 });
 
@@ -80,8 +91,11 @@ var clips=$$('[data-reveal="clip"]');
 
 /* ---------- preloader ---------- */
 var loader=$('#loader'),countEl=$('#loaderCount');
+// while the curtain is up, keyboard focus can't land on the hidden page behind it
+if(loader&&!reduce){document.getElementById('main').inert=true;document.getElementById('hdr').inert=true}
 function ready(){
   doc.classList.remove('is-loading');doc.classList.add('is-ready');
+  document.getElementById('main').inert=document.getElementById('hdr').inert=false;
   $('.hero__title').classList.add('in');
   measure();
 }
@@ -121,12 +135,18 @@ function setMenu(open){
   burger.setAttribute('aria-expanded',open);
   burger.setAttribute('aria-label',open?'סגירת תפריט':'פתיחת תפריט');
   doc.classList.toggle('menu-open',open);doc.classList.toggle('is-locked',open);
-  if(open){menu.hidden=false;requestAnimationFrame(function(){menu.classList.add('is-open')})}
+  // keep keyboard and screen-reader focus inside the open menu
+  $('#main').inert=open;$('.foot').inert=open;
+  if(open){menu.hidden=false;requestAnimationFrame(function(){menu.classList.add('is-open')});setTimeout(function(){$('a',menu).focus()},350)}
   else{menu.classList.remove('is-open');setTimeout(function(){if(!menu.classList.contains('is-open'))menu.hidden=true},900)}
 }
 burger.addEventListener('click',function(){setMenu(burger.getAttribute('aria-expanded')!=='true')});
-$$('a',menu).forEach(function(a){a.addEventListener('click',function(){setMenu(false)})});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&doc.classList.contains('menu-open'))setMenu(false)});
+$$('a',menu).forEach(function(a){a.addEventListener('click',function(){
+  setMenu(false);
+  // move focus to the section the link points to
+  var t=$(a.getAttribute('href'));if(t)setTimeout(function(){t.setAttribute('tabindex','-1');t.focus({preventScroll:true})},60);
+})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&doc.classList.contains('menu-open')){setMenu(false);burger.focus()}});
 
 /* ---------- chips: filter / drawings / topic ---------- */
 var track=$('.works__track');
@@ -135,6 +155,7 @@ document.addEventListener('click',function(e){
   $$('[data-g="'+g+'"]').forEach(function(x){var on=x.dataset.v===v;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
   if(g==='filter'){
     $$('.pcard[data-key]').forEach(function(c){c.hidden=!(v==='all'||c.dataset.key===v)});
+    $('#worksStatus').textContent='מוצגים '+$$('.pcard[data-key]').filter(function(c){return !c.hidden}).length+' פרויקטים';
     measure();
     var w=$('.works');if(isDesktop()&&!reduce&&scrollY>w.offsetTop)window.scrollTo({top:w.offsetTop,behavior:'smooth'});
   }
@@ -187,19 +208,24 @@ function pmFill(card){
   var steps=$('#pmSteps');steps.style.setProperty('--sf',(s-1)/4);
   $$('li',steps).forEach(function(li,i){li.style.setProperty('--k',i);li.classList.toggle('is-done',i<s-1);li.classList.toggle('is-now',i===s-1);if(i===s-1)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current')});
   var gal=$('#pmGallery');gal.hidden=!p.gallery;
-  $('#pmShots').innerHTML=(p.gallery||[]).map(function(g,i){return '<figure class="pm__shot'+(i===0?' pm__shot--wide':'')+'"><img src="'+g[0]+'" alt="'+g[1]+'" loading="lazy"></figure>'}).join('');
-  $('#pmSpecs').innerHTML=p.specs.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>'}).join('');
+  // built with textContent, not HTML strings, so project data can never inject markup
+  var shots=$('#pmShots');shots.textContent='';
+  (p.gallery||[]).forEach(function(g,i){var f=document.createElement('figure'),im=document.createElement('img');f.className='pm__shot'+(i===0?' pm__shot--wide':'');im.src=g[0];im.alt=g[1];im.loading='lazy';f.appendChild(im);shots.appendChild(f)});
+  var specs=$('#pmSpecs');specs.textContent='';
+  p.specs.forEach(function(r){var d=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=r[0];dd.textContent=r[1];d.appendChild(dt);d.appendChild(dd);specs.appendChild(d)});
   pmBody.scrollTop=0;
 }
 function pmOpen(card){
   pmReturn=document.activeElement;pmFill(card);
   pm.hidden=false;doc.classList.add('is-locked');
+  $('#main').inert=$('#hdr').inert=$('.foot').inert=true;
   pm.getBoundingClientRect();
   setTimeout(function(){pm.classList.add('is-open');$('.pm__btn--close').focus({preventScroll:true})},20);
 }
 function pmClose(){
   if(pm.hidden)return;
   pm.classList.remove('is-open');doc.classList.remove('is-locked');
+  $('#main').inert=$('#hdr').inert=$('.foot').inert=false;
   setTimeout(function(){if(!pm.classList.contains('is-open'))pm.hidden=true},700);
   if(pmReturn)pmReturn.focus({preventScroll:true});
 }
@@ -207,7 +233,7 @@ function pmStep(d){
   var list=pmCards(),i=list.indexOf(pmCur);if(i<0)i=0;
   var next=list[(i+d+list.length)%list.length];
   pm.classList.add('is-swap');
-  setTimeout(function(){pmFill(next);pm.classList.remove('is-swap')},280);
+  setTimeout(function(){pmFill(next);pm.classList.remove('is-swap');$('#pmLive').textContent='פרויקט '+(list.indexOf(next)+1)+' מתוך '+list.length+': '+$('#pmName').textContent},280);
 }
 document.addEventListener('click',function(e){
   var card=e.target.closest('.pcard[data-id]');
@@ -271,7 +297,7 @@ function onScroll(y){
   // hero
   if(y<vh*1.2)hero.style.setProperty('--hp',clamp(y/vh,0,1).toFixed(4));
   // play the hero video only while it's on screen
-  if(heroVid&&!reduce){var onHero=y<vh*1.1;if(onHero&&heroVid.paused)heroVid.play().catch(function(){});else if(!onHero&&!heroVid.paused)heroVid.pause()}
+  if(heroVid&&!reduce){var onHero=y<vh*1.1&&!still();if(onHero&&heroVid.paused)heroVid.play().catch(function(){});else if(!onHero&&!heroVid.paused)heroVid.pause()}
   // day → night (scroll-linked image swap — kept for reduced motion too)
   if(M.day){
     var p=prog(M.day,y,0,M.day.h-vh);
@@ -353,12 +379,12 @@ if(finePointer&&!reduce){
 function loop(){
   var y=window.scrollY;
   if(y!==last){mqV+=Math.min(40,Math.abs(y-last))*.04;if(y!==last&&last>=0)mqDir=y>last?1:-1;onScroll(y);last=y}
-  if(mq&&!reduce){
+  if(mq&&!reduce&&!still()){
     mqV*=.92;mqX+=(0.6+mqV)*mqDir;
     var half=mq.scrollWidth/2;if(mqX>half)mqX-=half;if(mqX<0)mqX+=half;
     mq.style.transform='translate3d('+mqX.toFixed(1)+'px,0,0)';
   }
-  if(finePointer&&!reduce){
+  if(finePointer&&!reduce&&!still()){
     rx=lerp(rx,mx,.18);ry=lerp(ry,my,.18);
     cur.style.setProperty('--dx',mx+'px');cur.style.setProperty('--dy',my+'px');
     cur.style.setProperty('--rx',rx.toFixed(1)+'px');cur.style.setProperty('--ry',ry.toFixed(1)+'px');
@@ -372,6 +398,22 @@ window.addEventListener('load',measure);
 if(window.ResizeObserver){var ro=new ResizeObserver(function(){clearTimeout(rt);rt=setTimeout(measure,120)});ro.observe(document.body)}
 requestAnimationFrame(loop);
 
+/* ---------- keyboard & motion accessibility ---------- */
+// the projects strip moves by transform on desktop: scroll the page so a focused card is on screen
+track.addEventListener('focusin',function(e){
+  var c=e.target.closest('.pcard');if(!c||!isDesktop()||reduce||!M.works||!M.wDist)return;
+  var x=track.scrollWidth-(c.offsetLeft+c.offsetWidth)-(parseFloat(getComputedStyle(track).paddingInlineStart)||0);
+  window.scrollTo({top:M.works.t+clamp(x,0,M.wDist),behavior:'instant'});
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&svcFloat&&fOn){fOn=false;svcFloat.classList.remove('is-on')}});
+// hero "pause motion" button shares its state with the accessibility widget
+var motionBtn=$('[data-motion-toggle]');
+function syncMotion(){var on=still();motionBtn.setAttribute('aria-pressed',on);$('span',motionBtn).textContent=on?'הפעלת תנועה':'עצירת תנועה';if(!heroVid||reduce)return;if(on)heroVid.pause();else if(window.scrollY<window.innerHeight*1.1)heroVid.play().catch(function(){})}
+if(motionBtn){
+  motionBtn.addEventListener('click',function(){if(window.akhA11y)window.akhA11y.set('still',!still());else{doc.classList.toggle('a11y-still');measure()}syncMotion()});
+  window.addEventListener('akh-a11y',syncMotion);syncMotion();
+}
+
 /* ---------- active nav link ---------- */
 var navLinks=$$('.hdr__nav a');
 var navIo=new IntersectionObserver(function(en){en.forEach(function(e){if(e.isIntersecting){navLinks.forEach(function(a){a.classList.toggle('is-active',a.getAttribute('href')==='#'+e.target.id)})}})},{rootMargin:'-45% 0px -50% 0px'});
@@ -381,18 +423,23 @@ navLinks.forEach(function(a){var s=$(a.getAttribute('href'));if(s)navIo.observe(
 var btn=$('#sendBtn');
 var g=function(id){return document.getElementById(id)};
 var isLocal=/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)||location.protocol==='file:';
-function showThanks(){g('formBox').hidden=true;g('thanks').hidden=false}
+function showThanks(){g('formBox').hidden=true;g('thanks').hidden=false;g('thanks').focus()}
+// inline, screen-reader-announced error instead of alert()
+function showError(msg){var s=g('formStatus');s.textContent=msg;s.hidden=false}
 // שם חובה, ולפחות טלפון או דוא״ל — הודעות דרך בועת האימות של הדפדפן
 function validate(){
   var name=g('ak-name'),phone=g('ak-phone'),mail=g('ak-mail');
-  [name,phone,mail].forEach(function(f){f.setCustomValidity('')});
-  if(!name.value.trim()){name.setCustomValidity('נא למלא שם');return name.reportValidity()}
-  if(!phone.value.trim()&&!mail.value.trim()){phone.setCustomValidity('נא להשאיר טלפון או דוא״ל');return phone.reportValidity()}
-  if(phone.value.trim()&&!/^[0-9+\-\s()]{9,}$/.test(phone.value.trim())){phone.setCustomValidity('מספר הטלפון אינו תקין');return phone.reportValidity()}
-  if(mail.value.trim()&&!mail.checkValidity()){return mail.reportValidity()}
+  [name,phone,mail].forEach(function(f){f.setCustomValidity('');f.removeAttribute('aria-invalid')});
+  // the error stays visible in the form (the browser bubble disappears) and is announced
+  function fail(f,msg){f.setCustomValidity(msg);f.setAttribute('aria-invalid','true');showError(msg);f.focus();return false}
+  if(!name.value.trim())return fail(name,'נא למלא שם מלא');
+  if(!phone.value.trim()&&!mail.value.trim())return fail(phone,'נא להשאיר טלפון או דוא״ל');
+  if(phone.value.trim()&&!/^[0-9+\-\s()]{9,}$/.test(phone.value.trim()))return fail(phone,'מספר הטלפון אינו תקין');
+  if(mail.value.trim()&&!mail.checkValidity())return fail(mail,'כתובת הדוא״ל אינה תקינה');
   return true;
 }
 btn.addEventListener('click',function(){
+  g('formStatus').hidden=true;
   if(btn.disabled||!validate())return;
   var topic=$('[data-g="topic"].on');
   var data={
@@ -401,19 +448,20 @@ btn.addEventListener('click',function(){
     email:g('ak-mail').value.trim(),
     message:g('ak-msg').value.trim(),
     topic:topic?topic.textContent.trim():'',
-    page:location.href,
+    // no query string, so tracking parameters (gclid, fbclid, utm) don't reach Formspree
+    page:location.origin+location.pathname,
     _subject:'פנייה חדשה מאתר אבני הכתר',
     _gotcha:g('ak-gotcha').value
   };
   if(data.email)data._replyto=data.email;
   if(FORM_ENDPOINT.indexOf('YOUR_FORM_ID')!==-1){
-    console.warn('FORM_ENDPOINT לא הוגדר — הפנייה לא נשלחה',data);
-    if(isLocal){showThanks()}else{alert('אירעה תקלה בשליחת הטופס. אפשר ליצור קשר בטלפון.')}
+    console.warn('FORM_ENDPOINT לא הוגדר — הפנייה לא נשלחה');
+    if(isLocal){showThanks()}else{showError('אירעה תקלה בשליחת הטופס. אפשר ליצור קשר בטלפון 02-623-4567.')}
     return;
   }
   btn.disabled=true;
   fetch(FORM_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
     .then(function(r){if(!r.ok)throw new Error(r.status);showThanks()})
-    .catch(function(){btn.disabled=false;alert('השליחה נכשלה. נא לנסות שוב או ליצור קשר בטלפון.')});
+    .catch(function(){btn.disabled=false;showError('השליחה נכשלה. נא לנסות שוב או ליצור קשר בטלפון 02-623-4567.')});
 });
 })();
